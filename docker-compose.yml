@@ -1,0 +1,38 @@
+services:
+  # Emula S3 en local.
+  localstack:
+    image: localstack/localstack:3
+    container_name: drive-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+
+  # API NestJS 
+  backend:
+    build: ./backend
+    container_name: drive-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - BUCKET_NAME=drive-clone-bucket
+    depends_on:
+      - localstack
+
+  # Interfaz Next.js
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+    container_name: drive-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
